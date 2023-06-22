@@ -1,4 +1,10 @@
-import { OPENAI_API_HOST, OPENAI_API_TYPE, OPENAI_API_VERSION, OPENAI_ORGANIZATION } from '@/utils/app/const';
+import {
+  OPENAI_API_HOST,
+  OPENAI_API_KEY,
+  OPENAI_API_TYPE,
+  OPENAI_API_VERSION,
+  OPENAI_ORGANIZATION,
+} from '@/utils/app/const';
 
 import { OpenAIModel, OpenAIModelID, OpenAIModels } from '@/types/openai';
 
@@ -6,29 +12,22 @@ export const config = {
   runtime: 'edge',
 };
 
-const handler = async (req: Request): Promise<Response> => {
+const JsonResponse = (data: unknown, status = 200) => {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+const handler = async () => {
+  const url = `${OPENAI_API_HOST}/v1/models`;
+
   try {
-    const { key } = (await req.json()) as {
-      key: string;
-    };
-
-    let url = `${OPENAI_API_HOST}/v1/models`;
-    if (OPENAI_API_TYPE === 'azure') {
-      url = `${OPENAI_API_HOST}/openai/deployments?api-version=${OPENAI_API_VERSION}`;
-    }
-
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
-        ...(OPENAI_API_TYPE === 'openai' && {
-          Authorization: `Bearer ${key ? key : process.env.OPENAI_API_KEY}`
-        }),
-        ...(OPENAI_API_TYPE === 'azure' && {
-          'api-key': `${key ? key : process.env.OPENAI_API_KEY}`
-        }),
-        ...((OPENAI_API_TYPE === 'openai' && OPENAI_ORGANIZATION) && {
-          'OpenAI-Organization': OPENAI_ORGANIZATION,
-        }),
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        'OpenAI-Organization': OPENAI_ORGANIZATION,
       },
     });
 
@@ -48,24 +47,21 @@ const handler = async (req: Request): Promise<Response> => {
 
     const json = await response.json();
 
-    const models: OpenAIModel[] = json.data
-      .map((model: any) => {
-        const model_name = (OPENAI_API_TYPE === 'azure') ? model.model : model.id;
-        for (const [key, value] of Object.entries(OpenAIModelID)) {
-          if (value === model_name) {
-            return {
-              id: model.id,
-              name: OpenAIModels[value].name,
-            };
-          }
-        }
-      })
-      .filter(Boolean);
+    console.log(json);
 
-    return new Response(JSON.stringify(models), { status: 200 });
-  } catch (error) {
-    console.error(error);
-    return new Response('Error', { status: 500 });
+    const models = json.data.reduce((acc: OpenAIModel[], model: any) => {
+      const modelId = model.id as OpenAIModelID;
+      if (Object.keys(OpenAIModels).includes(modelId)) {
+        acc.push(OpenAIModels[modelId]);
+      }
+      return acc;
+    }, [] as OpenAIModel[]);
+
+    return JsonResponse(models);
+  } catch (e) {
+    console.error(e);
+
+    return JsonResponse({ error: (e as Error).message }, 500);
   }
 };
 
