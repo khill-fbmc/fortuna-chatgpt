@@ -12,6 +12,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@clerk/nextjs": "^4.21.9",
     "@dqbd/tiktoken": "^1.0.2",
     "@tabler/icons-react": "^2.9.0",
     "eventsource-parser": "^0.1.0",
