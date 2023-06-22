@@ -3,6 +3,8 @@ import { useContext, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { ENABLE_API_KEY_SWAP, ENABLE_PLUGINS } from '@/utils/app/const';
+
 import HomeContext from '@/pages/api/home/home.context';
 
 import { SettingDialog } from '@/components/Settings/SettingDialog';
@@ -56,17 +58,15 @@ export const ChatbarSettings = () => {
         onClick={() => setIsSettingDialog(true)}
       />
 
-      {!serverSideApiKeyIsSet ? (
+      {ENABLE_API_KEY_SWAP && !serverSideApiKeyIsSet ? (
         <Key apiKey={apiKey} onApiKeyChange={handleApiKeyChange} />
       ) : null}
 
-      {!serverSidePluginKeysSet ? <PluginKeys /> : null}
+      {ENABLE_PLUGINS && !serverSidePluginKeysSet ? <PluginKeys /> : null}
 
       <SettingDialog
         open={isSettingDialogOpen}
-        onClose={() => {
-          setIsSettingDialog(false);
-        }}
+        onClose={() => setIsSettingDialog(false)}
       />
     </div>
   );

@@ -1,3 +1,7 @@
+export const ENABLE_PLUGINS = false;
+
+export const ENABLE_API_KEY_SWAP = false;
+
 export const APP_NAME = "FortunaGPT";
 
 export const LANDING_PAGE_HEADER = APP_NAME;
